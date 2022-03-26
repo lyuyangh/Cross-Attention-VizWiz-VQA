@@ -1,7 +1,9 @@
 """Module for flag definitions."""
 
 from absl import flags
-from absl._enum_module import enum
+
+# from absl._enum_module import enum
+import enum
 
 
 class FusionMethod(enum.Enum):
@@ -63,23 +65,15 @@ flags.DEFINE_enum_class(
     FusionMethod,
     "Fusion method for joint representation.",
 )
-flags.DEFINE_bool(
-    "use_train_and_val", True, "Use both train and val for training."
-)
+flags.DEFINE_bool("use_train_and_val", True, "Use both train and val for training.")
 
 flags.DEFINE_integer("seed", 1204, "Random seed.")
 flags.DEFINE_integer("hidden_dimension", 1024, "Dimension of hidden states.")
 flags.DEFINE_integer("number_of_epochs", 70, "Number of epochs for training.")
 
-flags.DEFINE_integer(
-    "start_epoch", 0, "Epoch at which training should start/restart."
-)
-flags.DEFINE_integer(
-    "warmup_length", 5, "Number of epochs for the warmup stage."
-)
-flags.DEFINE_float(
-    "warmup_factor", 0.5, "Factor by which learning rate is multiplied."
-)
+flags.DEFINE_integer("start_epoch", 0, "Epoch at which training should start/restart.")
+flags.DEFINE_integer("warmup_length", 5, "Number of epochs for the warmup stage.")
+flags.DEFINE_float("warmup_factor", 0.5, "Factor by which learning rate is multiplied.")
 flags.DEFINE_float(
     "lr_decay_factor",
     0.7,
@@ -92,9 +86,7 @@ flags.DEFINE_integer(
 flags.DEFINE_integer(
     "decay_step", 4, "Helps determine epochs for which decay is skipped."
 )
-flags.DEFINE_float(
-    "grad_clip", 0.25, "Max norm of the gradients for grad clipping."
-)
+flags.DEFINE_float("grad_clip", 0.25, "Max norm of the gradients for grad clipping.")
 
 flags.DEFINE_float(
     "save_score_threshold",

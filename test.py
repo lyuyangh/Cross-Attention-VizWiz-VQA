@@ -19,8 +19,9 @@ import utils.train_utils as train_utils
 from model.vqa_model import ModelParams, VQAModel
 from utils.dataset import Dictionary, VQAFeatureDataset
 from utils.flags import FLAGS
+from constants import device
 
-SPLIT = "test"
+SPLIT = "val"
 
 
 def get_question(q, dataloader):
@@ -28,9 +29,7 @@ def get_question(q, dataloader):
     dictionary = dataloader.dataset.dictionary
     for i in range(q.size(0)):
         str.append(
-            dictionary.idx2word[q[i]]
-            if q[i] < len(dictionary.idx2word)
-            else "_"
+            dictionary.idx2word[q[i]] if q[i] < len(dictionary.idx2word) else "_"
         )
     return " ".join(str)
 
@@ -45,9 +44,8 @@ def get_logits(model, dataloader):
     M = dataloader.dataset.num_ans_candidates
     pred = torch.FloatTensor(N, M).zero_()
     im_ids = [""] * N
-    device = torch.device("cuda")
     idx = 0
-    for i, (image_features, _, question, image_ids) in enumerate(
+    for i, dp in enumerate(
         tqdm(
             dataloader,
             total=len(dataloader),
@@ -56,8 +54,13 @@ def get_logits(model, dataloader):
             colour="blue",
         )
     ):
-        image_features = image_features.cuda()
-        question = question.cuda()
+        image_features, _, question = dp[:3]
+        if SPLIT == "test":
+            image_ids = dp[3]
+        else:
+            image_ids = dp[4]
+        image_features = image_features.to(device)
+        question = question.to(device)
         logits, _, _ = model(image_features, question)
         pred[idx : idx + FLAGS.batch_size, :].copy_(logits.data)
         im_ids[idx : idx + FLAGS.batch_size] = list(image_ids) + [""] * (
@@ -69,14 +72,13 @@ def get_logits(model, dataloader):
 
 
 def make_json(logits, im_ids, dataloader):
-    results = []
+    results = {}
     for i in range(logits.size(0)):
-        result = {}
         if len(im_ids[i]) == 0:
             continue
-        result["image"] = im_ids[i] + ".jpg"
-        result["answer"] = get_answer(logits[i], dataloader)
-        results.append(result)
+        image = im_ids[i] + ".jpg"
+        answer = get_answer(logits[i], dataloader)
+        results[image] = answer
     return results
 
 
@@ -107,21 +109,24 @@ def main(_):
         glove_path=FLAGS.glove_path,
         model_params=model_params,
         hidden_dimension=FLAGS.hidden_dimension,
-    ).cuda()
-    model = nn.DataParallel(model).cuda()
+    ).to(device)
+
+    print("# trainable parameters", sum(p.numel() for p in model.parameters()))
+
+    model = nn.DataParallel(model).to(device)
     model.train(False)
     eval_loader = DataLoader(
         eval_dset,
         FLAGS.batch_size,
         shuffle=False,
-        num_workers=1,
+        num_workers=0,
     )
 
     def process(model, eval_loader):
         model_path = FLAGS.snapshot_path
         print("loading %s" % model_path)
 
-        model_data = torch.load(model_path)
+        model_data = torch.load(model_path, map_location=device)
         model.load_state_dict(model_data.get("model_state", model_data))
         model.train(False)
 

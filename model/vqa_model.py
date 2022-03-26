@@ -98,9 +98,7 @@ class VQAModel(nn.Module):
                 dropout=0.5,
             )
 
-    def _get_attented_features(
-        self, attention_input, attention_layer, feature_vector
-    ):
+    def _get_attented_features(self, attention_input, attention_layer, feature_vector):
         attention_weights = attention_layer(attention_input)
         attended_vector = (attention_weights * feature_vector).sum(1)
         return attended_vector, attention_weights
@@ -109,9 +107,7 @@ class VQAModel(nn.Module):
         """Forward."""
         word_embedding = self.word_embedding_net(q)
         question_embedding = self.question_embedding_net(word_embedding)
-        proj_question_embedding = self.question_projection_net(
-            question_embedding
-        )
+        proj_question_embedding = self.question_projection_net(question_embedding)
 
         proj_image_embedding = self.image_projection_net(v)
 
@@ -181,7 +177,6 @@ class VQAModel(nn.Module):
                 attended_image_embedding * attended_question_embedding
             )
         logits = self.classifier(joint_representation)
-
         return (
             logits,
             visual_attention_weights,

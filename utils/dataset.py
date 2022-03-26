@@ -43,9 +43,7 @@ class Dictionary(object):
 
     def tokenize(self, sentence, add_word):
         sentence = sentence.lower()
-        sentence = (
-            sentence.replace(",", "").replace("?", "").replace("'s", " 's")
-        )
+        sentence = sentence.replace(",", "").replace("?", "").replace("'s", " 's")
 
         words = sentence.split()
         tokens = []
@@ -184,9 +182,7 @@ class VQAFeatureDataset(Dataset):
         self.features = hf_file.get("image_features")
         self.bboxes = hf_file.get("image_bb")
 
-        self.entries = _load_dataset(
-            dataroot, name, self.img_id2idx, self.label2ans
-        )
+        self.entries = _load_dataset(dataroot, name, self.img_id2idx, self.label2ans)
         self.tokenize()
         self.tensorize()
 
@@ -200,9 +196,7 @@ class VQAFeatureDataset(Dataset):
             tokens = tokens[:max_length]
             if len(tokens) < max_length:
                 # Note here we pad in front of the sentence
-                padding = [self.dictionary.padding_idx] * (
-                    max_length - len(tokens)
-                )
+                padding = [self.dictionary.padding_idx] * (max_length - len(tokens))
                 tokens = tokens + padding
             assert_eq(len(tokens), max_length)
             entry["q_token"] = tokens
@@ -238,7 +232,7 @@ class VQAFeatureDataset(Dataset):
             target = torch.zeros(self.num_ans_candidates)
             if labels is not None:
                 target.scatter_(0, labels, scores)
-            return (features, torch.tensor([]), question, target)
+            return (features, torch.tensor([]), question, target, image_id)
         else:
             bb = torch.from_numpy(self.bboxes[entry["image"]])
             return (
